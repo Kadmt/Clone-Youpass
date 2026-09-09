@@ -13,25 +13,28 @@ public class WritingFeedback {
 
     @Id
     @GeneratedValue( strategy = GenerationType.IDENTITY)
-    private long id;
+    private Long id;
 
     @OneToOne
     @JoinColumn( name = "submission_id", nullable = false)
     private Submission submission;
 
     @Column( name = "task_response_score")
-    private long taskResponseScore;
+    private Float taskResponseScore;
 
     @Column( name= "coherence_score")
-    private long coherenceScore;
+    private Float coherenceScore;
 
     @Column( name = "lexical_score")
-    private long lexicalScore;
+    private Float lexicalScore;
 
     @Column( name = "grammar_score")
-    private float overallBand;
+    private Float grammarScore;
 
     @Column( name = "errors_json", columnDefinition = "TEXT")
     private String errorsJson;
+
+    @Column( name = "overall_band")
+    private Float overallBand;
 
 }

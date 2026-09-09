@@ -2,6 +2,7 @@ package com.youpass.backend.entity;
 
 
 import jakarta.persistence.*;
+import jdk.jfr.Timestamp;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -23,7 +24,8 @@ public class User {
     @Column(name = "password_hash", nullable = false)
     private String passwordHash;
 
-    @Column(name = "created_at")
+    @Timestamp
+    @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
 }

@@ -3,7 +3,6 @@ package com.youpass.backend.entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.annotations.EmbeddedColumnNaming;
 
 
 @Entity
@@ -14,14 +13,14 @@ public class ListeningTrack {
 
     @Id
     @GeneratedValue( strategy = GenerationType.IDENTITY)
-    private long id;
+    private Long id;
 
     @ManyToOne
     @JoinColumn( name = "test_group_id")
     private TestGroup testGroup;
 
     @Column( name = "order_index")
-    private long orderIndex;
+    private Long orderIndex;
 
     @Column( name = "title")
     private String title;

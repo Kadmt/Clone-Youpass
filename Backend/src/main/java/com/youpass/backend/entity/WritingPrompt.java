@@ -14,14 +14,14 @@ public class WritingPrompt {
 
     @Id
     @GeneratedValue( strategy = GenerationType.IDENTITY)
-    private long id;
+    private Long id;
 
     @ManyToOne
     @JoinColumn( name = "test_group_id")
     private TestGroup testGroup;
 
     @Column( name = "order_index")
-    private long orderIndex;
+    private Long orderIndex;
 
     @Column( name = "title")
     private String title;

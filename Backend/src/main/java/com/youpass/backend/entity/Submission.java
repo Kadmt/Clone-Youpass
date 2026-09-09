@@ -1,6 +1,7 @@
 package com.youpass.backend.entity;
 
 import jakarta.persistence.*;
+import jdk.jfr.Timestamp;
 import lombok.Getter;
 import lombok.Setter;
 import java.time.LocalDateTime;
@@ -31,7 +32,8 @@ public class Submission {
     @Column(name = "score")
     private Integer score;
 
-    @Column(name = "created_at")
+    @Timestamp
+    @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
     @OneToOne(mappedBy = "submission")   // lấy feedback qua submission - không cần tách riêng thành feedbackRepo
