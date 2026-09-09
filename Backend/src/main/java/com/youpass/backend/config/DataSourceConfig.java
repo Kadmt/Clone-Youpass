@@ -13,9 +13,15 @@ public class DataSourceConfig {
     public DataSource dataSource() {
         HikariDataSource dataSource = new HikariDataSource();
 
-        dataSource.setJdbcUrl(System.getenv("DB_Url"));
-        dataSource.setUsername(System.getenv("DB_Username"));
-        dataSource.setPassword(System.getenv("DB_password"));
+        String dbUrl = System.getenv("DB_Url");
+        dataSource.setJdbcUrl( dbUrl != null ? dbUrl : "jdbc:postgresql://localhost:5432/CloneYoupass");
+        // chống bị crash app khi bị biến môi trường null, tạo một fallback cho biến môi trường
+
+        String dbUsername = System.getenv("DB_Username");
+        dataSource.setUsername( dbUsername != null ? dbUsername : "postgres");
+
+        String dbPassword = System.getenv("DB_Password");
+        dataSource.setPassword(dbPassword != null ? dbPassword : "03062006");
 
         dataSource.setMaximumPoolSize(15);
         dataSource.setMinimumIdle(5);
