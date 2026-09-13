@@ -5,6 +5,8 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.List;
+
 
 @Entity
 @Table(name = "reading_passages")
@@ -19,6 +21,10 @@ public class ReadingPassage {
     @ManyToOne
     @JoinColumn( name = "test_group_id", nullable = false)
     private TestGroup testGroup;
+
+    @OneToMany(mappedBy = "passage")
+    private List<ReadingQuestion> questions;
+
 
     @Column(name = "order_index")
     private Integer orderIndex;
