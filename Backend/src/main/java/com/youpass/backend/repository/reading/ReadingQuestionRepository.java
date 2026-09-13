@@ -1,4 +1,7 @@
 package com.youpass.backend.repository.reading;
 
-public class ReadingQuestionRepository {
+import com.youpass.backend.entity.ReadingQuestion;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface ReadingQuestionRepository extends JpaRepository<ReadingQuestion, Long> {
 }

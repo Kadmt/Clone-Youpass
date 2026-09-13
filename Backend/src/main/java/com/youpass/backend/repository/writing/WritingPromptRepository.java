@@ -1,4 +1,7 @@
 package com.youpass.backend.repository.writing;
 
-public class WritingPromptRepository {
+import com.youpass.backend.entity.WritingPrompt;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface WritingPromptRepository extends JpaRepository<WritingPrompt, Long> {
 }

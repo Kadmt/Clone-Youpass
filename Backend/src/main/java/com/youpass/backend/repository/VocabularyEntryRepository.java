@@ -1,4 +1,7 @@
 package com.youpass.backend.repository;
 
-public class VocabularyEntryRepository {
+import com.youpass.backend.entity.VocabularyEntry;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface VocabularyEntryRepository extends JpaRepository<VocabularyEntry, Long> {
 }

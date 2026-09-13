@@ -1,4 +1,8 @@
 package com.youpass.backend.repository;
 
-public class SubmissionRepository {
+import com.youpass.backend.entity.Submission;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface SubmissionRepository extends JpaRepository<Submission, Long> {
+
 }
