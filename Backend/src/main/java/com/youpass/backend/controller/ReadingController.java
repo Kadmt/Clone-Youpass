@@ -1,9 +1,9 @@
 package com.youpass.backend.controller;
 
-
 import com.youpass.backend.dto.request.SubmitAnswersRequest;
 import com.youpass.backend.dto.response.PassageDetailDto;
 import com.youpass.backend.dto.response.PassageListDto;
+import com.youpass.backend.dto.response.ReadingPassageReviewDto;
 import com.youpass.backend.dto.response.SubmissionResultDto;
 import com.youpass.backend.service.ReadingService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,12 +31,16 @@ public class ReadingController {
 
     @PostMapping("/passage/{id}/submit")
     public ResponseEntity<SubmissionResultDto> submit(
-            @PathVariable Long id ,
+            @PathVariable Long id,
             @RequestParam Long userId,
             @RequestBody SubmitAnswersRequest request) {
         SubmissionResultDto result = readingService.submitAnswers(userId, id, request);
         return ResponseEntity.ok(result);
     }
 
-
+    @GetMapping({"/passages/submissions/{id}", "/passages/submission/{id}"})
+    public ResponseEntity<ReadingPassageReviewDto> getSubmissionReview(@PathVariable Long id) {
+        ReadingPassageReviewDto result = readingService.getSubmissionReview(id);
+        return ResponseEntity.ok(result);
+    }
 }
