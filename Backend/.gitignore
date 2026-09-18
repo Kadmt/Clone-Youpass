@@ -34,3 +34,4 @@ build/
 
 # Ignore local environment properties
 .env
+.md
