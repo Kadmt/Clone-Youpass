@@ -1,9 +1,10 @@
 package com.youpass.backend.entity;
 
 import jakarta.persistence.*;
-import jdk.jfr.Timestamp;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.CreationTimestamp;
+
 import java.time.LocalDateTime;
 
 @Entity
@@ -32,7 +33,7 @@ public class Submission {
     @Column(name = "score")
     private Integer score;
 
-    @Timestamp
+    @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
