@@ -1,11 +1,10 @@
 package com.youpass.backend.controller;
 
 import com.youpass.backend.dto.request.SubmitAnswersRequest;
-import com.youpass.backend.dto.response.PassageDetailDto;
-import com.youpass.backend.dto.response.PassageListDto;
-import com.youpass.backend.dto.response.ReadingPassageReviewDto;
-import com.youpass.backend.dto.response.SubmissionResultDto;
+import com.youpass.backend.dto.response.*;
+import com.youpass.backend.repository.TestGroupRepository;
 import com.youpass.backend.service.ReadingService;
+import com.youpass.backend.service.TestGroupService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,6 +17,9 @@ public class ReadingController {
 
     @Autowired
     private ReadingService readingService;
+
+    @Autowired
+    private TestGroupService testGroupService;
 
     @GetMapping("/passages")
     public ResponseEntity<List<PassageListDto>> getAllPassages() {
@@ -41,6 +43,12 @@ public class ReadingController {
     @GetMapping({"/passages/submissions/{id}", "/passages/submission/{id}"})
     public ResponseEntity<ReadingPassageReviewDto> getSubmissionReview(@PathVariable Long id) {
         ReadingPassageReviewDto result = readingService.getSubmissionReview(id);
+        return ResponseEntity.ok(result);
+    }
+
+    @GetMapping("/test-groups")
+    public ResponseEntity<List<TestGroupForReading>> getAllReadingTestGroups() {
+        List<TestGroupForReading> result = testGroupService.getAllReadingFullTest();
         return ResponseEntity.ok(result);
     }
 }
