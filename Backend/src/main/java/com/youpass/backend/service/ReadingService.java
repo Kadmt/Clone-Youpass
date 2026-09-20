@@ -1,13 +1,11 @@
 package com.youpass.backend.service;
 
+import com.youpass.backend.entity.*;
+import com.youpass.backend.repository.TestGroupRepository;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.ObjectMapper;
 import com.youpass.backend.dto.request.SubmitAnswersRequest;
 import com.youpass.backend.dto.response.*;
-import com.youpass.backend.entity.ReadingPassage;
-import com.youpass.backend.entity.ReadingQuestion;
-import com.youpass.backend.entity.Submission;
-import com.youpass.backend.entity.User;
 import com.youpass.backend.exception.business.ResourceNotFoundException;
 import com.youpass.backend.repository.SubmissionRepository;
 import com.youpass.backend.repository.UserRepository;
@@ -24,6 +22,8 @@ import java.util.Map;
 @Service
 @Transactional(readOnly = true)
 public class ReadingService {
+    @Autowired
+    private TestGroupRepository testGroupRepository;
 
     @Autowired
     private ReadingPassageRepository passageRepository;
@@ -197,5 +197,40 @@ public class ReadingService {
         }
         return result;
     }
+
+    // lấy toàn bộ passages trong một bài test
+    public TestGroupDetaitDto getFullTest(Long testGroupId) {
+        TestGroup testGroup =  testGroupRepository.findById(testGroupId)
+                .orElseThrow(() -> new ResourceNotFoundException("Can not find test group with Id: " + testGroupId));
+
+        List<ReadingPassage> passages = passageRepository.findByTestGroupIdOrderByOrderIndexAsc(testGroupId);
+
+        List<PassageDetailDto> passagesDto = passages.stream()
+                .map(p -> PassageDetailDto.builder()
+                        .id(p.getId())
+                        .title(p.getTitle())
+                        .content(p.getContent())
+                        .questions(mapToQuestionDto(p.getQuestions()))
+                        .build())
+                .toList();
+
+        return TestGroupDetaitDto.builder()
+                .testGroupId(testGroup.getId())
+                .passages(passagesDto)
+                .title(testGroup.getTitle())
+                .build();
+    }
+
+    private List<QuestionDto> mapToQuestionDto(List<ReadingQuestion> questions) {
+
+        return  questions.stream()
+                .map(q -> QuestionDto.builder()
+                .id(q.getId())
+                .questionText(q.getQuestionText())
+                .questionType(q.getQuestionType())
+                .optionsJson(q.getOptionsJson())
+                .build()).toList();
+    }
+
 
 }

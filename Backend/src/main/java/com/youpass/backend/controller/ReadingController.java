@@ -51,4 +51,10 @@ public class ReadingController {
         List<TestGroupForReading> result = testGroupService.getAllReadingFullTest();
         return ResponseEntity.ok(result);
     }
+
+    @GetMapping("/test-groups/{testGroupId}/passages")
+    public ResponseEntity<TestGroupDetaitDto> getTestGroupPassages(@PathVariable Long testGroupId) {
+        TestGroupDetaitDto result = readingService.getFullTest(testGroupId);
+        return ResponseEntity.ok(result);
+    }
 }
