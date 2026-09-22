@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.List;
+
 
 @Entity
 @Table(name = "listening_tracks")
@@ -21,6 +23,10 @@ public class ListeningTrack {
 
     @Column( name = "order_index")
     private Long orderIndex;
+
+    @OneToMany( mappedBy = "track")
+    @OrderBy("id ASC")
+    private List<ListeningQuestion> questions;
 
     @Column( name = "title")
     private String title;
