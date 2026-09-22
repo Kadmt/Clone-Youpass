@@ -23,6 +23,7 @@ public class ReadingPassage {
     private TestGroup testGroup;
 
     @OneToMany(mappedBy = "passage")
+    @OrderBy("id ASC")
     private List<ReadingQuestion> questions;
 
 
