@@ -71,7 +71,7 @@ public class ReadingService {
 
     // nộp bài chấm điểm
     @Transactional
-    public SubmissionResultDto submitAnswers(Long userId, Long passageId, SubmitAnswersRequest request) {
+    public SubmissionReadingResultDto submitAnswers(Long userId, Long passageId, SubmitAnswersRequest request) {
         ReadingPassage passage = passageRepository.findById(passageId)
                 .orElseThrow(() -> new ResourceNotFoundException("Passage not found with id: " + passageId));
 
@@ -113,7 +113,7 @@ public class ReadingService {
 
         submissionRepository.save(submission);
 
-        return SubmissionResultDto.builder()
+        return SubmissionReadingResultDto.builder()
                 .submissionId(submission.getId())
                 .score((long) correctCount)
                 .totalQuestions(questions.size())

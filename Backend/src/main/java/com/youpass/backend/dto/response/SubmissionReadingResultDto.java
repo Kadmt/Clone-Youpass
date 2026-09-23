@@ -8,11 +8,10 @@ import java.util.List;
 
 @Getter
 @Builder
-public class SubmissionResultDto {
+public class SubmissionReadingResultDto {
     private Long submissionId;
     private Long score;
     private Integer totalQuestions;
     private List<QuestionResultDto> results;
-
 
 }

@@ -2,7 +2,6 @@ package com.youpass.backend.controller;
 
 import com.youpass.backend.dto.request.SubmitAnswersRequest;
 import com.youpass.backend.dto.response.*;
-import com.youpass.backend.repository.TestGroupRepository;
 import com.youpass.backend.service.ReadingService;
 import com.youpass.backend.service.TestGroupService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,11 +31,11 @@ public class ReadingController {
     }
 
     @PostMapping("/passage/{id}/submit")
-    public ResponseEntity<SubmissionResultDto> submit(
+    public ResponseEntity<SubmissionReadingResultDto> submit(
             @PathVariable Long id,
             @RequestParam Long userId,
             @RequestBody SubmitAnswersRequest request) {
-        SubmissionResultDto result = readingService.submitAnswers(userId, id, request);
+        SubmissionReadingResultDto result = readingService.submitAnswers(userId, id, request);
         return ResponseEntity.ok(result);
     }
 
