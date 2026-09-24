@@ -16,10 +16,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.ObjectMapper;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class ListeningService {
@@ -67,21 +65,23 @@ public class ListeningService {
     }
 
     // nộp  và chấm điểm một part lẻ listening
-    @Transactional
+    @Transactional(readOnly = true)
     public SubmissionListeningResultDto submitAnswers(Long userId, Long listeningTrackId, SubmitAnswersRequest answers) {
         ListeningTrack listeningTrack = listeningTrackRepository.findById(listeningTrackId).orElseThrow(() -> new ResourceNotFoundException("Can not find listening track with id: " + listeningTrackId));
         List<ListeningQuestion> questions = listeningTrack.getQuestions();
 
-        User user = userRepository.findById(userId).orElseThrow(() -> new ResourceClosedException("Can not find user with ID: " + userId));
+        User user = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("Can not find user with ID: " + userId));
 
-        Map<Long, String> userAnswers = answers.getAnswers() != null ? answers.getAnswers() : new HashMap<>();
+        Map<Long, String> userAnswers = (answers != null && answers.getAnswers() != null) ? answers.getAnswers() : Collections.emptyMap();
 
         int correctCount = 0;
         List<QuestionResultDto> results = new ArrayList<>();
 
         for (ListeningQuestion question : questions) {
             String userAnswer = userAnswers.get(question.getId());
-            Boolean isCorrect = userAnswer != null && userAnswer.equalsIgnoreCase(question.getCorrectAnswer());
+            Boolean isCorrect = userAnswer != null
+                    && question.getCorrectAnswer() != null
+                    && userAnswer.trim().equalsIgnoreCase(question.getCorrectAnswer().trim());
 
             if (isCorrect) {
                 correctCount ++;
@@ -100,6 +100,7 @@ public class ListeningService {
         submission.setSkillType("listening");
         submission.setReferenceId(listeningTrackId);
         submission.setScore(correctCount);
+        submission.setDuration(answers != null ? answers.getDuration() : null);
 
         try {
             submission.setAnswerData(objectMapper.writeValueAsString(userAnswers));
@@ -108,15 +109,44 @@ public class ListeningService {
         }
         submissionRepository.save(submission);
 
-
         return SubmissionListeningResultDto.builder()
                 .submissionId(submission.getId())
                 .score((long) correctCount)
+                .duration(submission.getDuration())
                 .results(results)
                 .transcript(listeningTrack.getTranscript())
                 .audioUrl(listeningTrack.getAudioUrl())
                 .totalQuestions(questions.size())
                 .build();
+    }
+
+    // lấy lịch sử các bài listening đã làm
+
+    // tạm thời dùng userId để test Postman
+    public List<SubmissionHistoryDto> getListeningSubmissionHistory(Long userId) {
+        User user = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("Can not find user with Id: " + userId));
+        List<Submission> submissions = submissionRepository.findByUserIdAndSkillType(userId, "listening");
+
+        // 1. Lấy danh sách trackId duy nhất từ các submission
+        List<Long> trackIds = submissions.stream()
+                .map(Submission::getReferenceId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+
+        // 2. Query DB 1 lần duy nhất để lấy tất cả Track và tạo Map: Key = trackId, Value = title
+        Map<Long, String> trackTitleMap = listeningTrackRepository.findAllById(trackIds).stream()
+                .collect(Collectors.toMap(ListeningTrack::getId, ListeningTrack::getTitle));
+
+        return submissions.stream().map(submit -> SubmissionHistoryDto.builder()
+                .id(submit.getId())
+                        .createdAt(submit.getCreatedAt())
+                .duration(submit.getDuration())
+                .skillType("listening")
+                .score(submit.getScore())
+                .title(trackTitleMap.getOrDefault(submit.getReferenceId(), "Unknown Track"))
+                .build())
+                .toList();
     }
 
 
