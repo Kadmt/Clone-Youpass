@@ -15,6 +15,7 @@ public class ReadingPassageReviewDto {
     private String content;
     private Integer score;
     private Integer totalQuestions;
+    private Integer duration;
     private LocalDateTime createdAt;
     private List<QuestionReviewDetailDto> questions;
 }

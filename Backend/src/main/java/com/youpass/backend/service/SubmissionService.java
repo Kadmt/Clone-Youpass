@@ -29,7 +29,7 @@ public class SubmissionService {
     @Autowired
     private ListeningTrackRepository listeningTrackRepository;
 
-    // lấy danh sách các submission
+    // lấy danh sách các submission theo skillType
     public List<SubmissionHistoryDto>  getAllSubmissions(Long userId, String skillType) {
         List<Submission> submissionList = (skillType == null) ? submissionRepository.findByUserId(userId) : submissionRepository.findByUserIdAndSkillType(userId, skillType);
         List<SubmissionHistoryDto> result = new ArrayList<>();
@@ -39,6 +39,7 @@ public class SubmissionService {
                     .id(submission.getId())
                     .createdAt(submission.getCreatedAt())
                     .score(submission.getScore())
+                    .duration(submission.getDuration())
                     .skillType(submission.getSkillType())
                     .title(resolveTitle(submission))
                     .build()

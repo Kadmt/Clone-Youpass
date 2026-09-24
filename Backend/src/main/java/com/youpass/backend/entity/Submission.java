@@ -33,6 +33,9 @@ public class Submission {
     @Column(name = "score")
     private Integer score;
 
+    @Column(name = "duration")
+    private Integer duration;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

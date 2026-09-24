@@ -104,6 +104,7 @@ public class ReadingService {
         submission.setSkillType("reading");
         submission.setReferenceId(passageId);
         submission.setScore(correctCount);
+        submission.setDuration(request != null ? request.getDuration() : null);
 
         try {
             submission.setAnswerData(objectMapper.writeValueAsString(userAnswers));
@@ -117,6 +118,7 @@ public class ReadingService {
                 .submissionId(submission.getId())
                 .score((long) correctCount)
                 .totalQuestions(questions.size())
+                .duration(submission.getDuration())
                 .results(results)
                 .build();
     }
@@ -160,6 +162,7 @@ public class ReadingService {
                 .content(passage.getContent())
                 .score(submission.getScore())
                 .totalQuestions(questions != null ? questions.size() : 0)
+                .duration(submission.getDuration())
                 .createdAt(submission.getCreatedAt())
                 .questions(questionReviews)
                 .build();

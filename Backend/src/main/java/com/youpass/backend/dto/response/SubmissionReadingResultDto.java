@@ -12,6 +12,7 @@ public class SubmissionReadingResultDto {
     private Long submissionId;
     private Long score;
     private Integer totalQuestions;
+    private Integer duration;
     private List<QuestionResultDto> results;
 
 }
