@@ -1,5 +1,6 @@
 package com.youpass.backend.service;
 
+import com.youpass.backend.common.utils.ScoringService;
 import com.youpass.backend.entity.*;
 import com.youpass.backend.repository.TestGroupRepository;
 import tools.jackson.core.type.TypeReference;
@@ -36,6 +37,9 @@ public class ReadingService {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private ScoringService scoringService;
 
     // lấy danh sách đề
     public List<PassageListDto> getAllPassages() {
@@ -81,45 +85,28 @@ public class ReadingService {
         List<ReadingQuestion> questions = passage.getQuestions();
         Map<Long, String> userAnswers = request.getAnswers() != null ? request.getAnswers() : new HashMap<>();
 
-        int correctCount = 0;
-        List<QuestionResultDto> results = new ArrayList<>();
-
-        for (ReadingQuestion question : questions) {
-            String userAnswer = userAnswers.get(question.getId());
-            boolean isCorrect = userAnswer != null && question.getCorrectAnswer().equalsIgnoreCase(userAnswer);
-            if (isCorrect) {
-                correctCount++;
-            }
-
-            results.add(QuestionResultDto.builder()
-                    .questionId(question.getId())
-                    .userAnswer(userAnswer)
-                    .correctAnswer(question.getCorrectAnswer())
-                    .isCorrect(isCorrect)
-                    .build());
-        }
+        ScoringService.GradeResult gradeResult = scoringService.gradeSubmission(questions, userAnswers);
 
         Submission submission = new Submission();
         submission.setUser(user);
         submission.setSkillType("reading");
         submission.setReferenceId(passageId);
-        submission.setScore(correctCount);
+        submission.setScore(gradeResult.correctCount());
         submission.setDuration(request != null ? request.getDuration() : null);
 
         try {
             submission.setAnswerData(objectMapper.writeValueAsString(userAnswers));
         } catch (Exception e) {
-            submission.setAnswerData(userAnswers.toString());
+            submission.setAnswerData("{}");
         }
-
         submissionRepository.save(submission);
 
         return SubmissionReadingResultDto.builder()
                 .submissionId(submission.getId())
-                .score((long) correctCount)
-                .totalQuestions(questions.size())
+                .score((long) gradeResult.correctCount())
+                .totalQuestions(questions != null ? questions.size() : 0)
                 .duration(submission.getDuration())
-                .results(results)
+                .results(gradeResult.results())
                 .build();
     }
 
@@ -135,25 +122,9 @@ public class ReadingService {
         ReadingPassage passage = passageRepository.findById(submission.getReferenceId())
                 .orElseThrow(() -> new ResourceNotFoundException("Passage not found with id: " + submission.getReferenceId()));
 
-        Map<Long, String> userAnswers = parseAnswerData(submission.getAnswerData());
+        Map<Long, String> userAnswers = scoringService.parseAnswerData(submission.getAnswerData());
         List<ReadingQuestion> questions = passage.getQuestions();
-
-        List<QuestionReviewDetailDto> questionReviews = (questions != null ? questions : List.<ReadingQuestion>of())
-                .stream()
-                .map(q -> {
-                    String userAnswer = userAnswers.get(q.getId());
-                    boolean isCorrect = userAnswer != null && q.getCorrectAnswer() != null && q.getCorrectAnswer().equalsIgnoreCase(userAnswer);
-                    return QuestionReviewDetailDto.builder()
-                            .questionId(q.getId())
-                            .questionText(q.getQuestionText())
-                            .questionType(q.getQuestionType())
-                            .optionsJson(q.getOptionsJson())
-                            .userAnswer(userAnswer)
-                            .correctAnswer(q.getCorrectAnswer())
-                            .isCorrect(isCorrect)
-                            .build();
-                })
-                .toList();
+        List<QuestionReviewDetailDto> questionReviews = scoringService.buildReviewDetails(questions, userAnswers);
 
         return ReadingPassageReviewDto.builder()
                 .submissionId(submission.getId())
@@ -166,39 +137,6 @@ public class ReadingService {
                 .createdAt(submission.getCreatedAt())
                 .questions(questionReviews)
                 .build();
-    }
-
-    // hàm phụ trợ parse answerData từ JSON hoặc format Map.toString()
-    private Map<Long, String> parseAnswerData(String answerData) {
-        Map<Long, String> result = new HashMap<>();
-        if (answerData == null || answerData.isBlank()) {
-            return result;
-        }
-
-        // 1. Thử parse nếu là định dạng JSON chuẩn
-        try {
-            return objectMapper.readValue(answerData, new TypeReference<Map<Long, String>>() {});
-        } catch (Exception ignored) {
-        }
-
-        // 2. Fallback nếu là chuỗi {1=A, 2=B}
-        String clean = answerData.trim();
-        if (clean.startsWith("{") && clean.endsWith("}")) {
-            clean = clean.substring(1, clean.length() - 1);
-            if (!clean.isBlank()) {
-                String[] pairs = clean.split(",");
-                for (String pair : pairs) {
-                    String[] keyValue = pair.split("=");
-                    if (keyValue.length == 2) {
-                        try {
-                            result.put(Long.parseLong(keyValue[0].trim()), keyValue[1].trim());
-                        } catch (NumberFormatException ignored) {
-                        }
-                    }
-                }
-            }
-        }
-        return result;
     }
 
     // lấy toàn bộ passages trong một bài test

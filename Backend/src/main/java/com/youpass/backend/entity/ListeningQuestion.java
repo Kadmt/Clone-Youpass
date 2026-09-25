@@ -10,7 +10,7 @@ import lombok.Setter;
 @Table(name = "listening_questions")
 @Getter
 @Setter
-public class ListeningQuestion {
+public class ListeningQuestion implements GradableQuestion{
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
