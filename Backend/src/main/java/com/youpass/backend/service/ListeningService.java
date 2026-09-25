@@ -11,6 +11,7 @@ import com.youpass.backend.repository.SubmissionRepository;
 import com.youpass.backend.repository.UserRepository;
 import com.youpass.backend.repository.listening.ListeningTrackRepository;
 import org.hibernate.ResourceClosedException;
+import com.youpass.backend.common.utils.ScoringService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,6 +34,9 @@ public class ListeningService {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private ScoringService scoringService;
 
     // lấy tất cả các listening tracks
     public List<ListeningTrackDto> getAllListeningTracks() {
@@ -64,42 +68,25 @@ public class ListeningService {
                 .build();
     }
 
-    // nộp  và chấm điểm một part lẻ listening
-    @Transactional(readOnly = true)
+    // nộp và chấm điểm một part lẻ listening
+    @Transactional
     public SubmissionListeningResultDto submitAnswers(Long userId, Long listeningTrackId, SubmitAnswersRequest answers) {
-        ListeningTrack listeningTrack = listeningTrackRepository.findById(listeningTrackId).orElseThrow(() -> new ResourceNotFoundException("Can not find listening track with id: " + listeningTrackId));
+        ListeningTrack listeningTrack = listeningTrackRepository.findById(listeningTrackId)
+                .orElseThrow(() -> new ResourceNotFoundException("Can not find listening track with id: " + listeningTrackId));
         List<ListeningQuestion> questions = listeningTrack.getQuestions();
 
-        User user = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("Can not find user with ID: " + userId));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Can not find user with ID: " + userId));
 
         Map<Long, String> userAnswers = (answers != null && answers.getAnswers() != null) ? answers.getAnswers() : Collections.emptyMap();
 
-        int correctCount = 0;
-        List<QuestionResultDto> results = new ArrayList<>();
-
-        for (ListeningQuestion question : questions) {
-            String userAnswer = userAnswers.get(question.getId());
-            Boolean isCorrect = userAnswer != null
-                    && question.getCorrectAnswer() != null
-                    && userAnswer.trim().equalsIgnoreCase(question.getCorrectAnswer().trim());
-
-            if (isCorrect) {
-                correctCount ++;
-            }
-
-            results.add(QuestionResultDto.builder()
-                    .userAnswer(userAnswer)
-                    .correctAnswer(question.getCorrectAnswer())
-                    .questionId(question.getId())
-                    .isCorrect(isCorrect)
-                    .build());
-        }
+        ScoringService.GradeResult gradeResult = scoringService.gradeSubmission(questions, userAnswers);
 
         Submission submission = new Submission();
         submission.setUser(user);
         submission.setSkillType("listening");
         submission.setReferenceId(listeningTrackId);
-        submission.setScore(correctCount);
+        submission.setScore(gradeResult.correctCount());
         submission.setDuration(answers != null ? answers.getDuration() : null);
 
         try {
@@ -109,22 +96,27 @@ public class ListeningService {
         }
         submissionRepository.save(submission);
 
-        return SubmissionListeningResultDto.builder()
-                .submissionId(submission.getId())
-                .score((long) correctCount)
-                .duration(submission.getDuration())
-                .results(results)
+        TrackInfoDto trackInfo = TrackInfoDto.builder()
+                .trackId(listeningTrackId)
                 .transcript(listeningTrack.getTranscript())
                 .audioUrl(listeningTrack.getAudioUrl())
-                .totalQuestions(questions.size())
+                .title(listeningTrack.getTitle())
+                .build();
+
+        return SubmissionListeningResultDto.builder()
+                .submissionId(submission.getId())
+                .score((long) gradeResult.correctCount())
+                .duration(submission.getDuration())
+                .results(gradeResult.results())
+                .trackInfo(trackInfo)
+                .totalQuestions(questions != null ? questions.size() : 0)
                 .build();
     }
 
     // lấy lịch sử các bài listening đã làm
-
     // tạm thời dùng userId để test Postman
     public List<SubmissionHistoryDto> getListeningSubmissionHistory(Long userId) {
-        User user = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("Can not find user with Id: " + userId));
+        userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("Can not find user with Id: " + userId));
         List<Submission> submissions = submissionRepository.findByUserIdAndSkillType(userId, "listening");
 
         // 1. Lấy danh sách trackId duy nhất từ các submission
@@ -140,13 +132,43 @@ public class ListeningService {
 
         return submissions.stream().map(submit -> SubmissionHistoryDto.builder()
                 .id(submit.getId())
-                        .createdAt(submit.getCreatedAt())
+                .createdAt(submit.getCreatedAt())
                 .duration(submit.getDuration())
                 .skillType("listening")
                 .score(submit.getScore())
                 .title(trackTitleMap.getOrDefault(submit.getReferenceId(), "Unknown Track"))
                 .build())
                 .toList();
+    }
+
+    // xem chi tiết một bài listening đã nộp
+    public ListeningTrackReviewDto getOneListeningSubmissionResult(Long submissionId) {
+        Submission submission = submissionRepository.findById(submissionId)
+                .orElseThrow(() -> new ResourceNotFoundException("Can not find submission with Id: " + submissionId));
+
+        if (!"listening".equalsIgnoreCase(submission.getSkillType())) {
+            throw new IllegalArgumentException("Submission is not a listening test (skillType: " + submission.getSkillType() + ")");
+        }
+
+        ListeningTrack listeningTrack = listeningTrackRepository.findById(submission.getReferenceId())
+                .orElseThrow(() -> new ResourceNotFoundException("Can not find listening track with Id: " + submission.getReferenceId()));
+
+        Map<Long, String> userAnswers = scoringService.parseAnswerData(submission.getAnswerData());
+        List<ListeningQuestion> questions = listeningTrack.getQuestions();
+        List<QuestionReviewDetailDto> questionReviews = scoringService.buildReviewDetails(questions, userAnswers);
+
+        return ListeningTrackReviewDto.builder()
+                .submissionId(submission.getId())
+                .trackId(listeningTrack.getId())
+                .title(listeningTrack.getTitle())
+                .audioUrl(listeningTrack.getAudioUrl())
+                .transcript(listeningTrack.getTranscript())
+                .score(submission.getScore())
+                .totalQuestions(questions != null ? questions.size() : 0)
+                .duration(submission.getDuration())
+                .createdAt(submission.getCreatedAt())
+                .questions(questionReviews)
+                .build();
     }
 
 

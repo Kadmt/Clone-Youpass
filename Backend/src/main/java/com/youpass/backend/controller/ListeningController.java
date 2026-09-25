@@ -3,6 +3,7 @@ package com.youpass.backend.controller;
 
 import com.youpass.backend.dto.request.SubmitAnswersRequest;
 import com.youpass.backend.dto.response.ListeningTrackDto;
+import com.youpass.backend.dto.response.ListeningTrackReviewDto;
 import com.youpass.backend.dto.response.SubmissionHistoryDto;
 import com.youpass.backend.dto.response.SubmissionListeningResultDto;
 import com.youpass.backend.service.ListeningService;
@@ -44,4 +45,8 @@ public class ListeningController {
         return ResponseEntity.ok(listeningService.getListeningSubmissionHistory(userId));
     }
 
+    @GetMapping("/submissions/{id}")
+    public ResponseEntity<ListeningTrackReviewDto> getSubmissionReview(@PathVariable Long id) {
+        return ResponseEntity.ok(listeningService.getOneListeningSubmissionResult(id));
+    }
 }
