@@ -19,7 +19,7 @@ public class SecurityConfig {
                 // disable CSRF because REST API sử dụng Token (JWT)
                 .csrf(csrf -> csrf.disable())
 
-                .cors(Customizer.withDefaults())
+                .cors(Customizer.withDefaults()) // cho phép các port ở frontend có th gủi request
 
                 // Phân quyền Endpoint
                 .authorizeHttpRequests(auth -> auth

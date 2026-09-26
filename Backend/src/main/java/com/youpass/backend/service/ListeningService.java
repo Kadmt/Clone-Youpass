@@ -2,20 +2,18 @@ package com.youpass.backend.service;
 
 import com.youpass.backend.dto.request.SubmitAnswersRequest;
 import com.youpass.backend.dto.response.*;
-import com.youpass.backend.entity.ListeningQuestion;
-import com.youpass.backend.entity.ListeningTrack;
-import com.youpass.backend.entity.Submission;
-import com.youpass.backend.entity.User;
+import com.youpass.backend.entity.*;
 import com.youpass.backend.exception.business.ResourceNotFoundException;
 import com.youpass.backend.repository.SubmissionRepository;
+import com.youpass.backend.repository.TestGroupRepository;
 import com.youpass.backend.repository.UserRepository;
 import com.youpass.backend.repository.listening.ListeningTrackRepository;
-import org.hibernate.ResourceClosedException;
 import com.youpass.backend.common.utils.ScoringService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.ObjectMapper;
+
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -25,6 +23,9 @@ public class ListeningService {
 
     @Autowired
     private ListeningTrackRepository listeningTrackRepository;
+
+    @Autowired
+    private TestGroupRepository testGroupRepository;
 
     @Autowired
     private UserRepository userRepository;
@@ -171,5 +172,43 @@ public class ListeningService {
                 .build();
     }
 
+    // làm một bài full test Listening
+    @Transactional(readOnly = true)
+    public ListeningTestGroupDetailDto getOneFullTestListening(Long testGroupId) {
+        TestGroup testGroup = testGroupRepository.findById(testGroupId).orElseThrow(() -> new ResourceNotFoundException("Can not find test group with ID: " + testGroupId));
 
+        if (!"listening".equalsIgnoreCase(testGroup.getSkillType())) {
+            throw new IllegalArgumentException("Test group ID " + testGroupId + " is not a Listening test");
+        }
+        List<ListeningTrack> tracks = listeningTrackRepository.findByTestGroupIdOrderByOrderIndexAsc(testGroupId);
+        List<ListeningTrackDto> trackDtos = tracks.stream().map(track -> ListeningTrackDto.builder()
+                .id(track.getId())
+                .audioUrl(track.getAudioUrl())
+                .title(track.getTitle())
+                .orderIndex(track.getOrderIndex())
+                .questions(mapToQuestionDto(track.getQuestions()))
+                .build()
+        ).toList();
+
+        return ListeningTestGroupDetailDto.builder()
+                .testGroupId(testGroupId)
+                .title(testGroup.getTitle())
+                .tracks(trackDtos)
+                .build();
+
+
+    }
+    private List<QuestionDto> mapToQuestionDto(List<ListeningQuestion> questions) {
+        if (questions == null) {
+            return Collections.emptyList(); // sau thêm log ra màn hình lỗi
+        }
+
+        return  questions.stream()
+                .map(q -> QuestionDto.builder()
+                        .id(q.getId())
+                        .questionText(q.getQuestionText())
+                        .questionType(q.getQuestionType())
+                        .optionsJson(q.getOptionsJson())
+                        .build()).toList();
+    }
 }
