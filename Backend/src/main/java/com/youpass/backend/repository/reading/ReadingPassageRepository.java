@@ -1,6 +1,5 @@
 package com.youpass.backend.repository.reading;
 
-import com.youpass.backend.dto.response.TestGroupDetaitDto;
 import com.youpass.backend.entity.ReadingPassage;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;

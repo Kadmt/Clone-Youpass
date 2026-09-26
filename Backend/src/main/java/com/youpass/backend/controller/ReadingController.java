@@ -46,14 +46,14 @@ public class ReadingController {
     }
 
     @GetMapping("/test-groups")
-    public ResponseEntity<List<TestGroupForReading>> getAllReadingTestGroups() {
-        List<TestGroupForReading> result = testGroupService.getAllReadingFullTest();
+    public ResponseEntity<List<TestGroupDto>> getAllReadingTestGroups() {
+        List<TestGroupDto> result = testGroupService.getAllReadingFullTest();
         return ResponseEntity.ok(result);
     }
 
     @GetMapping("/test-groups/{testGroupId}/passages")
-    public ResponseEntity<TestGroupDetaitDto> getTestGroupPassages(@PathVariable Long testGroupId) {
-        TestGroupDetaitDto result = readingService.getFullTest(testGroupId);
+    public ResponseEntity<ReadingTestGroupDetailDto> getTestGroupPassages(@PathVariable Long testGroupId) {
+        ReadingTestGroupDetailDto result = readingService.getFullTest(testGroupId);
         return ResponseEntity.ok(result);
     }
 }

@@ -7,7 +7,7 @@ import java.util.List;
 
 @Builder
 @Getter
-public class TestGroupDetaitDto {
+public class ReadingTestGroupDetailDto {
     private Long testGroupId;
     private String title;
     private List<PassageDetailDto> passages;

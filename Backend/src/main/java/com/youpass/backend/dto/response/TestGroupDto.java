@@ -8,7 +8,7 @@ import lombok.Setter;
 @Getter
 @Builder
 @Setter
-public class TestGroupForReading {
+public class TestGroupDto {
     private Long id;
     private String title;
 }

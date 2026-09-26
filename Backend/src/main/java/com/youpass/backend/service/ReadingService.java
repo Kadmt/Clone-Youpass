@@ -3,7 +3,6 @@ package com.youpass.backend.service;
 import com.youpass.backend.common.utils.ScoringService;
 import com.youpass.backend.entity.*;
 import com.youpass.backend.repository.TestGroupRepository;
-import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.ObjectMapper;
 import com.youpass.backend.dto.request.SubmitAnswersRequest;
 import com.youpass.backend.dto.response.*;
@@ -15,7 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -140,7 +139,7 @@ public class ReadingService {
     }
 
     // lấy toàn bộ passages trong một bài test
-    public TestGroupDetaitDto getFullTest(Long testGroupId) {
+    public ReadingTestGroupDetailDto getFullTest(Long testGroupId) {
         TestGroup testGroup =  testGroupRepository.findById(testGroupId)
                 .orElseThrow(() -> new ResourceNotFoundException("Can not find test group with Id: " + testGroupId));
 
@@ -155,7 +154,7 @@ public class ReadingService {
                         .build())
                 .toList();
 
-        return TestGroupDetaitDto.builder()
+        return ReadingTestGroupDetailDto.builder()
                 .testGroupId(testGroup.getId())
                 .passages(passagesDto)
                 .title(testGroup.getTitle())
@@ -163,7 +162,9 @@ public class ReadingService {
     }
 
     private List<QuestionDto> mapToQuestionDto(List<ReadingQuestion> questions) {
-
+        if (questions == null) {
+            return Collections.emptyList();
+        }
         return  questions.stream()
                 .map(q -> QuestionDto.builder()
                 .id(q.getId())
